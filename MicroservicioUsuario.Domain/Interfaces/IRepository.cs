@@ -1,13 +1,11 @@
-﻿namespace ServiceCommon.Domain.Port.Repositories;
-
-public interface IRepository<T> 
+﻿namespace MicroservicioUsuario.Domain.Interfaces
 {
-    IEnumerable<T> GetAllAsync();
-    T GetByIdAsync(int id);
-    void AddAsync(T entity);
-    void UpdateAsync(T entity);
-    void DeleteAsync(int id);
-    void DeleteAsync(T entity);
-
-    void DeactivateByProjectId(int idProyecto);
+    public interface IRepository<T>
+    {
+        IEnumerable<T> GetAll();
+        T? GetById(int id);
+        void Add(T entity);
+        void Update(T entity);
+        void Delete(int id);
+    }
 }

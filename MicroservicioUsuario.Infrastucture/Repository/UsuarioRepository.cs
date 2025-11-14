@@ -1,111 +1,109 @@
-﻿using Dapper;
-using ServiceCommon.Domain.Port.Repositories;
-using ServiceCommon.Infrastructure.Persistence.Data;
-using ServiceUsuario.Domain.Entities;
+﻿using MicroservicioUsuario.Domain.Entities;
+using MicroservicioUsuario.Domain.Interfaces;
 using System.Collections.Generic;
-using System.Linq;
+using Dapper;
 
-namespace ServiceUsuario.Infrastructure.Persistence.Repositories
+namespace MicroservicioUsuario.Infrastructure.Repository
 {
-    public class UsuarioRepository : IDB<Usuario>
+    public class UsuarioRepository : IRepository<Usuario>
     {
-        private readonly IDbConnectionFactory _connectionFactory;
+        private readonly MySqlConnectionSingleton _connection;
 
-        public UsuarioRepository(IDbConnectionFactory connectionFactory)
+        public UsuarioRepository(MySqlConnectionSingleton connection)
         {
-            _connectionFactory = connectionFactory;
+            _connection = connection;
         }
 
-        public IEnumerable<Usuario> GetAllAsync()
+        public IEnumerable<Usuario> GetAll()
         {
-            using var connection = _connectionFactory.CreateConnection();
-     return connection.Query<Usuario>(
-     @"SELECT id_usuario AS Id, nombres AS Nombres, primer_apellido AS PrimerApellido, 
- segundo_apellido AS SegundoApellido, nombre_usuario AS NombreUsuario,
- contraseña, email, rol AS Rol, estado AS Estado,
-       requiere_cambio_contraseña AS RequiereCambioContraseña
-   FROM Usuario WHERE estado = 1 
-     ORDER BY id_usuario DESC");
-   }
+            using var conn = _connection.CreateConnection();
 
-        public Usuario GetByIdAsync(int id)
-        {
-            using var connection = _connectionFactory.CreateConnection();
-            return connection.QueryFirstOrDefault<Usuario>(
-                @"SELECT id_usuario AS Id, nombres AS Nombres, primer_apellido AS PrimerApellido, 
-                         segundo_apellido AS SegundoApellido, nombre_usuario AS NombreUsuario,
-                         contraseña, email, rol AS Rol, estado AS Estado,
-      requiere_cambio_contraseña AS RequiereCambioContraseña
-                  FROM Usuario WHERE id_usuario = @Id AND estado = 1;",
-                new { Id = id });
+            return conn.Query<Usuario>(
+                @"SELECT 
+                    id_usuario AS Id,
+                    nombres AS Nombres,
+                    primer_apellido AS PrimerApellido,
+                    segundo_apellido AS SegundoApellido,
+                    nombre_usuario AS NombreUsuario,
+                    contraseña AS Contraseña,
+                    email AS Email,
+                    rol AS Rol,
+                    estado AS Estado,
+                    requiere_cambio_contraseña AS RequiereCambioContraseña,
+                    fechaRegistro,
+                    ultimaModificacion
+                FROM Usuario
+                WHERE estado = 1
+                ORDER BY id_usuario DESC"
+            );
         }
 
-        public Usuario GetByEmailOrUsername(string emailOrUsername)
+        public Usuario GetById(int id)
         {
-            using var connection = _connectionFactory.CreateConnection();
-            
-            return connection.QueryFirstOrDefault<Usuario>(
-                @"SELECT id_usuario AS Id, nombres AS Nombres, primer_apellido AS PrimerApellido, 
-         segundo_apellido AS SegundoApellido, nombre_usuario AS NombreUsuario,
-   contraseña, email, rol AS Rol, estado AS Estado,
-      requiere_cambio_contraseña AS RequiereCambioContraseña
-          FROM Usuario 
-              WHERE (LOWER(TRIM(email)) = LOWER(TRIM(@EmailOrUsername)) 
-    OR LOWER(TRIM(nombre_usuario)) = LOWER(TRIM(@EmailOrUsername)))
-  AND estado = 1
-            LIMIT 1;",
-     new { EmailOrUsername = emailOrUsername?.Trim() });
+            using var conn = _connection.CreateConnection();
+
+            return conn.QueryFirstOrDefault<Usuario>(
+                @"SELECT 
+                    id_usuario AS Id,
+                    nombres AS Nombres,
+                    primer_apellido AS PrimerApellido,
+                    segundo_apellido AS SegundoApellido,
+                    nombre_usuario AS NombreUsuario,
+                    contraseña AS Contraseña,
+                    email AS Email,
+                    rol AS Rol,
+                    estado AS Estado,
+                    requiere_cambio_contraseña AS RequiereCambioContraseña,
+                    fechaRegistro,
+                    ultimaModificacion
+                FROM Usuario
+                WHERE id_usuario = @Id",
+                new { Id = id }
+            );
         }
 
-      public void AddAsync(Usuario entity)
-  {
-    using var connection = _connectionFactory.CreateConnection();
-    connection.Execute(
-                @"INSERT INTO Usuario (nombres, primer_apellido, segundo_apellido, nombre_usuario, 
-       contraseña, email, rol, estado, requiere_cambio_contraseña) 
-        VALUES (@Nombres, @PrimerApellido, @SegundoApellido, @NombreUsuario, 
-          @Contraseña, @Email, @Rol, @Estado, @RequiereCambioContraseña);",
-     entity);
-        }
-
-        public void UpdateAsync(Usuario entity)
-  {
-      using var connection = _connectionFactory.CreateConnection();
-            connection.Execute(
-   @"UPDATE Usuario 
-          SET nombres = @Nombres, primer_apellido = @PrimerApellido, segundo_apellido = @SegundoApellido,
-      nombre_usuario = @NombreUsuario, contraseña = @Contraseña, email = @Email, rol = @Rol,
-     requiere_cambio_contraseña = @RequiereCambioContraseña
-             WHERE id_usuario = @Id;",
-     entity);
-        }
-
-        public void UpdatePassword(int id, string newPasswordHash)
-      {
-            using var connection = _connectionFactory.CreateConnection();
-            connection.Execute(
- @"UPDATE Usuario 
-            SET contraseña = @NewPasswordHash, 
-             requiere_cambio_contraseña = 0 
-     WHERE id_usuario = @Id;",
-    new { Id = id, NewPasswordHash = newPasswordHash });
-  }
-
-        public void DeleteAsync(int id)
+        public void Add(Usuario entity)
         {
-   using var connection = _connectionFactory.CreateConnection();
- connection.Execute(
-    @"DELETE FROM Usuario WHERE id_usuario = @Id;",
-            new { Id = id });
-    }
+            using var conn = _connection.CreateConnection();
 
-        public void DeleteAsync(Usuario entity)
-        {
-   DeleteAsync(entity.Id);
+            conn.Execute(
+                @"INSERT INTO Usuario 
+                    (nombres, primer_apellido, segundo_apellido, nombre_usuario,
+                     contraseña, email, rol, estado, requiere_cambio_contraseña)
+                 VALUES
+                    (@Nombres, @PrimerApellido, @SegundoApellido, @NombreUsuario,
+                     @Contraseña, @Email, @Rol, @Estado, @RequiereCambioContraseña)",
+                entity
+            );
         }
 
-        public void DeactivateByProjectId(int idProyecto)
- {
+        public void Update(Usuario entity)
+        {
+            using var conn = _connection.CreateConnection();
+
+            conn.Execute(
+                @"UPDATE Usuario SET
+                    nombres = @Nombres,
+                    primer_apellido = @PrimerApellido,
+                    segundo_apellido = @SegundoApellido,
+                    nombre_usuario = @NombreUsuario,
+                    contraseña = @Contraseña,
+                    email = @Email,
+                    rol = @Rol,
+                    requiere_cambio_contraseña = @RequiereCambioContraseña
+                 WHERE id_usuario = @Id",
+                entity
+            );
+        }
+
+        public void Delete(int id)
+        {
+            using var conn = _connection.CreateConnection();
+
+            conn.Execute(
+                "UPDATE Usuario SET estado = 0 WHERE id_usuario = @Id",
+                new { Id = id }
+            );
         }
     }
 }
