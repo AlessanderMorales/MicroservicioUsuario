@@ -1,7 +1,6 @@
 ﻿using MicroservicioUsuario.Application.Services;
 using MicroservicioUsuario.Domain.Entities;
 using MicroservicioUsuario.Domain.Interfaces;
-using MicroservicioUsuario.Infrastructure.Repository;
 using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);

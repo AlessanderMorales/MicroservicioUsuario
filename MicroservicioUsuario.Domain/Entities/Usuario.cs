@@ -7,7 +7,7 @@ namespace MicroservicioUsuario.Domain.Entities
 {
     public class Usuario
     {
-        public int Id { get; set; }
+        public int Id_Usuario { get; set; }
         public string Nombres { get; set; } = string.Empty;
         public string PrimerApellido { get; set; } = string.Empty;
         public string? SegundoApellido { get; set; }
