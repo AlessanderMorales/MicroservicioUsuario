@@ -105,4 +105,20 @@ public class UsuarioController : ControllerBase
         });
     }
 
+    [HttpPut("cambiar-contraseña/{id}")]
+    public IActionResult CambiarContraseña(int id, [FromBody] CambiarPasswordRequest req)
+    {
+        if (req == null || string.IsNullOrWhiteSpace(req.ContraseñaActual) || string.IsNullOrWhiteSpace(req.NuevaContraseña))
+            return BadRequest("Datos incompletos.");
+
+        bool ok = _service.CambiarContraseña(id, req.ContraseñaActual, req.NuevaContraseña);
+
+        if (!ok)
+            return BadRequest("La contraseña actual es incorrecta.");
+
+        return Ok(new { mensaje = "Contraseña cambiada correctamente" });
+    }
+
+
 }
+

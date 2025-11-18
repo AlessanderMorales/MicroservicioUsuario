@@ -65,5 +65,24 @@ namespace MicroservicioUsuario.Application.Services
 
             return usuario;
         }
+
+        public bool CambiarContraseña(int id, string actual, string nueva)
+        {
+            var usuario = _repo.Obtener(id);
+            if (usuario == null)
+                return false;
+
+            // Comparación literal porque tu login compara en texto plano
+            if (usuario.Contraseña != actual)
+                return false;
+
+            usuario.Contraseña = nueva; // Si quieres, aquí puedes aplicar hash
+            usuario.UltimaModificacion = DateTime.Now;
+
+            _repo.Editar(usuario);
+
+            return true;
+        }
+
     }
 }
