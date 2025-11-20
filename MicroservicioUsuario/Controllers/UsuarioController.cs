@@ -86,29 +86,33 @@ public class UsuarioController : ControllerBase
 
     [HttpPut("{id}")]
     [Authorize]
-    public IActionResult Update(int id, [FromBody] Usuario u)
+    public IActionResult Update(int id, [FromBody] UsuarioActualizarRequest req)
     {
         try
         {
             if (id <= 0) return BadRequest(new { error = true, message = "El ID debe ser mayor a 0." });
-            if (u == null) return BadRequest(new { error = true, message = "Los datos del usuario son requeridos." });
+            if (req == null) return BadRequest(new { error = true, message = "Los datos del usuario son requeridos." });
 
-            u.Nombres = InputValidator.SanitizeName(u.Nombres);
-            u.PrimerApellido = InputValidator.SanitizeName(u.PrimerApellido);
-            if (!string.IsNullOrEmpty(u.SegundoApellido)) u.SegundoApellido = InputValidator.SanitizeName(u.SegundoApellido);
-            u.Email = InputValidator.SanitizeEmail(u.Email);
-            u.NombreUsuario = InputValidator.SanitizeUsername(u.NombreUsuario);
-            u.Rol = InputValidator.ValidateRole(u.Rol);
+            req.Nombres = InputValidator.SanitizeName(req.Nombres);
+            req.PrimerApellido = InputValidator.SanitizeName(req.PrimerApellido);
+            if (!string.IsNullOrEmpty(req.SegundoApellido)) req.SegundoApellido = InputValidator.SanitizeName(req.SegundoApellido);
+            req.Email = InputValidator.SanitizeEmail(req.Email);
+            req.Rol = InputValidator.ValidateRole(req.Rol);
 
-            u.Id_Usuario = id;
-            u.UltimaModificacion = DateTime.Now;
+            var usuarioExistente = _service.Obtener(id);
+            if (usuarioExistente == null) return NotFound(new { error = true, message = "Usuario no encontrado." });
 
-            _service.Editar(u);
-            _logger.LogInformation($"Usuario actualizado: {u.NombreUsuario}");
+            usuarioExistente.Nombres = req.Nombres;
+            usuarioExistente.PrimerApellido = req.PrimerApellido;
+            usuarioExistente.SegundoApellido = req.SegundoApellido;
+            usuarioExistente.Email = req.Email;
+            usuarioExistente.Rol = req.Rol;
+            usuarioExistente.UltimaModificacion = DateTime.Now;
+
+            _service.Editar(usuarioExistente);
+            _logger.LogInformation($"Usuario actualizado: {usuarioExistente.NombreUsuario}");
 
             var actualizado = _service.Obtener(id);
-            if (actualizado == null) return NotFound(new { error = true, message = "Usuario no encontrado." });
-
             return Ok(actualizado);
         }
         catch (ArgumentException ex)
